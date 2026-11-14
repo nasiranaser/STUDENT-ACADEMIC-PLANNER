@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNIMAS Student Planner | Nur Nasira Binti Naser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-badge">NN</div>
+        <div class="brand-title">
+          <h1>Nur Nasira Binti Naser</h1>
+          <p>Matric: 105685 • Year 3 Sem 1 Network Computing • UNIMAS (2026/2027)</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="clock-pill" id="liveClock">Loading time...</div>
+        <button class="btn btn-outline-light btn-sm" id="resetDefaultBtn" title="Restore original 2026 UNIMAS course schedule">
+          ↺ Reset Default
+        </button>
+        <button class="btn btn-olive btn-sm" id="syncAllIcsBtn" title="Download .ICS file for all pending tasks & reminders">
+          📅 Sync All (.ICS)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Stats Row -->
+    <section class="stats-grid">
+      <div class="stat-card maroon-accent">
+        <span class="stat-label">Total Tasks</span>
+        <div class="stat-value" id="statTotal">0</div>
+        <span class="stat-sub">Assignments, Projects & Presentations</span>
+      </div>
+      <div class="stat-card olive-accent">
+        <span class="stat-label">Pending Deadlines</span>
+        <div class="stat-value" id="statPending">0</div>
+        <span class="stat-sub" id="statNextDue">No upcoming deadlines</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Completed</span>
+        <div class="stat-value" id="statCompleted">0</div>
+        <div class="progress-wrap">
+          <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="stat-card amber-accent">
+        <span class="stat-label">Active Reminders</span>
+        <div class="stat-value" id="statReminders">0</div>
+        <span class="stat-sub">Ready for Calendar Sync</span>
+      </div>
+    </section>
+
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-grid">
+
+      <!-- Left Column: Assignments & Projects -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Assignments, Projects & Presentations</h2>
+            <p class="subtitle">Manage deadlines, track progress, and sync directly to Google or Apple Calendar</p>
+          </div>
+          <button class="btn btn-maroon" id="openTaskModalBtn">+ Add Task</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+          <input type="text" id="searchInput" class="form-control search-box" placeholder="Search title, course code, or notes..." />
+          <select id="courseFilter" class="form-control select-sm">
+            <option value="ALL">All Courses</option>
+            <option value="TMN2223">TMN2223 - OOSD</option>
+            <option value="TMF3113">TMF3113 - Project Management</option>
+            <option value="TMF3963">TMF3963 - Ethics & Professionalism</option>
+            <option value="TMN3093">TMN3093 - CSAM</option>
+            <option value="TMN3223">TMN3223 - Web App Dev</option>
+            <option value="TMN3233">TMN3233 - Artificial Intelligence</option>
+            <option value="MANDARIN">Mandarin Level 1</option>
+          </select>
+          <select id="typeFilter" class="form-control select-sm">
+            <option value="ALL">All Types</option>
+            <option value="Assignment">Assignment</option>
+            <option value="Project">Project</option>
+            <option value="Presentation">Presentation</option>
+          </select>
+          <select id="statusFilter" class="form-control select-sm">
+            <option value="ALL">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+
+        <div id="activeDateFilterBanner" class="date-filter-banner hidden">
+          <span>Showing items due on <strong id="filteredDateText"></strong></span>
+          <button class="btn-link" id="clearDateFilterBtn">Clear Date Filter</button>
+        </div>
+
+        <!-- Task List -->
+        <div id="taskList" class="task-list"></div>
+      </section>
+
+      <!-- Right Column: Calendar, Reminders & Notes -->
+      <aside class="sidebar">
+
+        <!-- Mini Monthly Calendar -->
+        <div class="card">
+          <div class="card-header compact">
+            <div>
+              <h3 id="calendarMonthTitle">November 2026</h3>
+              <p class="subtitle">Click a highlighted date to filter tasks</p>
+            </div>
+            <div class="cal-nav">
+              <button class="icon-btn" id="prevMonthBtn" title="Previous Month">‹</button>
+              <button class="icon-btn" id="nextMonthBtn" title="Next Month">›</button>
+            </div>
+          </div>
+
+          <div class="quick-month-tabs">
+            <button class="month-pill active" id="jumpNovBtn">Nov 2026</button>
+            <button class="month-pill" id="jumpDecBtn">Dec 2026</button>
+          </div>
+
+          <div class="calendar-weekdays">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div class="calendar-days" id="calendarDays"></div>
+
+          <div class="calendar-legend">
+            <span><i class="dot maroon"></i> Assignment</span>
+            <span><i class="dot olive"></i> Project</span>
+            <span><i class="dot amber"></i> Presentation</span>
+          </div>
+        </div>
+
+        <!-- Reminders & Calendar Sync -->
+        <div class="card">
+          <div class="card-header compact">
+            <div>
+              <h3>Reminders & Calendar Sync</h3>
+              <p class="subtitle">Quick alerts synced to Google Calendar / .ICS</p>
+            </div>
+            <button class="btn btn-olive btn-sm" id="openReminderModalBtn">+ Reminder</button>
+          </div>
+          <div id="reminderList" class="reminder-list"></div>
+        </div>
+
+        <!-- Study Notes Scratchpad -->
+        <div class="card">
+          <div class="card-header compact">
+            <div>
+              <h3>Study Notes</h3>
+              <p class="subtitle">Course notes, lab commands & study ideas</p>
+            </div>
+            <button class="btn btn-maroon btn-sm" id="openNoteModalBtn">+ Note</button>
+          </div>
+          <div id="notesList" class="notes-list"></div>
+        </div>
+
+      </aside>
+    </div>
+  </main>
+
+  <!-- Modal: Add / Edit Task -->
+  <div class="modal-backdrop hidden" id="taskModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="taskModalTitle">Add Assignment / Project</h3>
+        <button class="close-btn" data-close="taskModal">×</button>
+      </div>
+      <form id="taskForm">
+        <input type="hidden" id="taskId" />
+        <div class="form-group">
+          <label for="taskTitle">Title *</label>
+          <input type="text" id="taskTitle" class="form-control" placeholder="e.g., PROJECT: System Architecture & Implementation" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskCourse">Course *</label>
+            <select id="taskCourse" class="form-control" required>
+              <option value="TMN2223">TMN2223 - Object-Oriented Software Dev</option>
+              <option value="TMF3113">TMF3113 - Project Management</option>
+              <option value="TMF3963">TMF3963 - Ethics & Professionalism</option>
+              <option value="TMN3093">TMN3093 - Computer System Admin & Mgmt</option>
+              <option value="TMN3223">TMN3223 - Web Application Development</option>
+              <option value="TMN3233">TMN3233 - Artificial Intelligence</option>
+              <option value="MANDARIN">Mandarin Level 1</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="taskType">Category *</label>
+            <select id="taskType" class="form-control" required>
+              <option value="Assignment">Assignment</option>
+              <option value="Project">Project</option>
+              <option value="Presentation">Presentation</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="taskDate">Due Date *</label>
+            <input type="date" id="taskDate" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="taskTime">Due Time *</label>
+            <input type="time" id="taskTime" class="form-control" value="23:59" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="taskPriority">Priority</label>
+          <select id="taskPriority" class="form-control">
+            <option value="High">High Priority</option>
+            <option value="Medium" selected>Medium Priority</option>
+            <option value="Low">Low Priority</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="taskDesc">Details / Submission Notes</label>
+          <textarea id="taskDesc" class="form-control" rows="3" placeholder="e.g., Submit via eLEAP before 5:00 PM..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close="taskModal">Cancel</button>
+          <button type="submit" class="btn btn-maroon">Save Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Reminder -->
+  <div class="modal-backdrop hidden" id="reminderModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Calendar Reminder</h3>
+        <button class="close-btn" data-close="reminderModal">×</button>
+      </div>
+      <form id="reminderForm">
+        <div class="form-group">
+          <label for="reminderTitle">Reminder Title *</label>
+          <input type="text" id="reminderTitle" class="form-control" placeholder="e.g., Finalize TMN2223 OOSD Slides" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reminderDate">Date *</label>
+            <input type="date" id="reminderDate" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="reminderTime">Time *</label>
+            <input type="time" id="reminderTime" class="form-control" value="09:00" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="reminderAlert">Alert Lead Time</label>
+          <select id="reminderAlert" class="form-control">
+            <option value="15">15 minutes before</option>
+            <option value="60" selected>1 hour before</option>
+            <option value="1440">1 day before</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close="reminderModal">Cancel</button>
+          <button type="submit" class="btn btn-olive">Save & Sync Ready</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Note -->
+  <div class="modal-backdrop hidden" id="noteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="noteModalTitle">Add Study Note</h3>
+        <button class="close-btn" data-close="noteModal">×</button>
+      </div>
+      <form id="noteForm">
+        <input type="hidden" id="noteId" />
+        <div class="form-group">
+          <label for="noteTitle">Note Title *</label>
+          <input type="text" id="noteTitle" class="form-control" placeholder="e.g., CSAM Linux Permissions Checklist" required />
+        </div>
+        <div class="form-group">
+          <label for="noteTag">Color Theme</label>
+          <select id="noteTag" class="form-control">
+            <option value="cream">Warm Cream</option>
+            <option value="maroon">Maroon Tint</option>
+            <option value="olive">Olive Green Tint</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="noteBody">Content *</label>
+          <textarea id="noteBody" class="form-control" rows="4" placeholder="Write your study notes, formulas, or reminders..." required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-close="noteModal">Cancel</button>
+          <button type="submit" class="btn btn-maroon">Save Note</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
